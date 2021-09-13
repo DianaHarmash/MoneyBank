@@ -15,7 +15,6 @@ public class DataBase {
         Connection connection = null;
         try {
             connection = DriverManager.getConnection(url, user, password);
-            System.out.println("Connection is successful");
             return connection;
         } catch (SQLException e) {
             System.out.println(e.getMessage());
