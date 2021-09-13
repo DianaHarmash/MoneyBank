@@ -5,7 +5,6 @@ import org.example.model.workers.Employee;
 import org.example.model.workers.Manager;
 import org.example.model.workers.Other;
 
-import java.awt.*;
 import java.math.BigDecimal;
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -27,15 +26,26 @@ public class Model {
         }
     }
 
+    /**
+     * The method which calculates a salary depending on the method of calculation,
+     * the method of calculation is set by either of classes SmoothRemainingsSalary or ProportionalSalary
+     */
+
     public void computeSalary() {
         SalaryBuilder sb = new SalaryBuilder()
                 .withDepartment(departments.get(0))
                 .withFullSalary(BigDecimal.valueOf(50000))
-                .withComputer(new SmoothRemainingSalary());
+              //  .withComputer(new SmoothRemainingSalary());
+                .withComputer(new ProportionalSalary());
         SalaryResult sr = sb.build();
         System.out.println(sr);
 
     }
+
+    /**
+     * The method creates tables in data base if they does not exist
+     * @throws SQLException
+     */
 
     private void setUpDataBase() throws SQLException {
         dataBase.executeUpdate(SQLCommands.SQL_CREATE_TABLE_DEPARTMENT);
@@ -43,6 +53,11 @@ public class Model {
         dataBase.executeUpdate(SQLCommands.SQL_CREATE_TABLE_SUBORDINATION);
         dataBase.executeUpdate(SQLCommands.SQL_CREATE_TABLE_OTHER);
     }
+
+    /**
+     * The method initialize data base if it wasn't initialized before
+     * @throws SQLException
+     */
 
     private void initializeData() throws SQLException {
         if (dataBase.executeScalar(SQLCommands.SQL_SELECT_AMOUNT_OF_EMPLOYEES) > 0) return;
@@ -52,13 +67,31 @@ public class Model {
         dataBase.executeUpdate(SQLCommands.SQL_INSERT_INTO_OTHER);
     }
 
+    /**
+     * The method to get data from data base
+     * @param message is an SQL command
+     * @return ResultSet with data acquired from data base
+     */
+
     public ResultSet getFromDB(String message) {
         return dataBase.executeQuery(message);
     }
 
+    /**
+     * The method which makes data base updated
+     * @param message is an SQL command which tell what to update in data base
+     */
+
     public void updateRequest(String message) {
         dataBase.executeUpdate(message);
     }
+
+    /**
+     * The method which creates a new object Department (if such one is absent in ArrayList departments) or returns
+     * the needed object from departments
+     * @param result is data from data base
+     * @return Department
+     */
 
     private Department getDepartment(ResultSet result) {
         String department = null;
@@ -79,6 +112,12 @@ public class Model {
 
     }
 
+    /**
+     * The method which creates a new Manager
+     * @param result is a data from data base
+     * @return new Manager
+     */
+
     private Manager getManager(ResultSet result) {
         try {
             return new Manager(result.getString(SQLColumns.NAME_OF_EMPLOYEE),
@@ -93,6 +132,12 @@ public class Model {
         }
         return null;
     }
+
+    /**
+     * The method which creates a new Other
+     * @param other is a data from data base
+     * @return new Other
+     */
 
     private Other getOther(ResultSet other) {
         try {
@@ -110,6 +155,12 @@ public class Model {
         return null;
     }
 
+    /**
+     * The method which creates new Employee
+     * @param result is a data from data base
+     * @return new Employee
+     */
+
     private Employee getEmployee(ResultSet result) {
         try {
             return new Employee(result.getString(SQLColumns.NAME_OF_EMPLOYEE),
@@ -125,6 +176,13 @@ public class Model {
         return null;
     }
 
+    /**
+     * The method to set employees which obey to a manager
+     * @param resultSet is a data from data base
+     * @param subjects is an HasMap of existing employees obeying to a manager, in which key is a manager's id and a value is ArrayList of employees
+     * @param employee is an employee to which should be insert into the ArrayList of employees
+     */
+
     private void subordination (ResultSet resultSet, HashMap<Integer, ArrayList<Employee>> subjects, Employee employee) {
         try {
             int idOfManager = resultSet.getInt(SQLColumns.ID_OF_MANAGER);
@@ -138,6 +196,12 @@ public class Model {
             e.printStackTrace();
         }
     }
+
+    /**
+     * The method which creates a full set of all needed for working of program classes.
+     * It get a data from data base and check what it must create either a manager or an other or an employee
+     * @throws SQLException
+     */
 
     public void getDataFromTables() throws SQLException{
         Department mainDepartment = new Department("Whole office");
@@ -168,6 +232,11 @@ public class Model {
         }
         getArrayListToManagers(subjects);
     }
+
+    /**
+     * The method which gets all employees from ArrayList employees (it is a value in the HashMap subjects) and copy it into the object of class manager
+     * @param subjects is a HashMap containing a list of subjects
+     */
 
     private void getArrayListToManagers(HashMap<Integer, ArrayList<Employee>> subjects) {
         for (int x = 0; x < departments.size(); x++) {
